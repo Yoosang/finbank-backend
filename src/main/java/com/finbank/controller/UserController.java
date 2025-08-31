@@ -4,6 +4,10 @@ import com.finbank.domain.User;
 import com.finbank.repository.UserRepository;
 import com.finbank.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +19,7 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
 
     @RequestMapping("/register")
     public String register(@RequestBody User user) {
@@ -32,6 +37,13 @@ public class UserController {
             throw new RuntimeException("비밀번호 불일치");
         }
 
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getEmail(),
+                        loginRequest.getPassword()
+                )
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
         return jwtUtil.generateToken(user.getEmail());
     }
 }
